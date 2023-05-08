@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer, GeoJSON } from "react-leaflet";
 import toGeoJSON from "@mapbox/togeojson";
 import dynamic from "next/dynamic";
 
@@ -44,9 +43,6 @@ export type RouteStop = {
   Name: string;
   StopId: number;
   StopRecordId: number;
-
-  // Injected by us
-  Route: string;
 };
 
 export type RouteDetails = {
@@ -153,7 +149,14 @@ export type RouteDetails = {
   DetourActiveMessageCount: number;
 };
 
-const Map = dynamic(() => import("../components/Map"), { ssr: false });
+const Map = dynamic(() => import("../components/Map"), {
+  ssr: false,
+  loading: () => (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <span className="text-2xl font-bold text-white">Loading...</span>
+    </div>
+  ),
+});
 
 export default function Home() {
   const [routeIds, setRouteIds] = useState([
@@ -198,7 +201,6 @@ export default function Home() {
     "10092",
   ]);
   const [vehicles, setVehicles] = useState<RouteVehicle[]>([]);
-  const [stops, setStops] = useState<RouteStop[]>([]);
   const [routesGeoJSON, setRoutesGeoJSON] = useState<any[]>([]);
   const [routeDetails, setRouteDetails] = useState<RouteDetails[]>([]);
 
@@ -211,18 +213,6 @@ export default function Home() {
       .then((res) => res.json())
       .then((res) => {
         setVehicles(res);
-      });
-  };
-
-  const fetchStops = () => {
-    fetch(
-      `https://bustracker.pvta.com/InfoPoint/rest/Stops/GetAllStopsForRoutes?routeIDs=${routeIds.join(
-        ","
-      )}`
-    )
-      .then((res) => res.json())
-      .then((res) => {
-        setStops(res);
       });
   };
 
@@ -267,7 +257,6 @@ export default function Home() {
 
   useEffect(() => {
     fetchVehicles();
-    fetchStops();
     fetchAllRouteDetails();
   }, []);
 
@@ -278,22 +267,22 @@ export default function Home() {
   return (
     <main className="relative w-screen h-screen">
       <div className="absolute bottom-0 z-50 flex w-full my-4">
-        <div className="flex flex-col justify-self-center items-center justify-center w-full h-full">
-          <span className="px-4 py-3 bg-gray-800 rounded-md bg-opacity-75">
+        <div className="flex flex-col items-center justify-center w-full h-full justify-self-center">
+          <span className="px-4 py-3 bg-gray-800 bg-opacity-75 rounded-md">
             <span className="text-xl font-bold text-white">
               Only showing active routes
             </span>
           </span>
         </div>
       </div>
-      <div className="absolute top-0 right-4 z-50 justify-end flex my-4 mx-auto">
-        <div className="flex flex-col  space-y-1 w-full h-full">
-          <span className="px-4 py-3 bg-gray-800 rounded-md bg-opacity-75">
+      <div className="absolute top-0 z-50 flex justify-end mx-auto my-4 right-4">
+        <div className="flex flex-col w-full h-full space-y-1">
+          <span className="px-4 py-3 bg-gray-800 bg-opacity-75 rounded-md">
             <span className="text-xl font-bold text-white">
               {vehicles.length} vehicles
             </span>
           </span>
-          <span className="px-4 py-3 flex flex-col bg-gray-800 rounded-md bg-opacity-75">
+          <span className="flex flex-col px-4 py-3 bg-gray-800 bg-opacity-75 rounded-md">
             <span className="text-xl font-bold text-white">
               It&apos;s currently:
             </span>
@@ -308,7 +297,11 @@ export default function Home() {
         </div>
       </div>
 
-      <Map routesGeoJSON={routesGeoJSON} vehicles={vehicles} />
+      <Map
+        routesGeoJSON={routesGeoJSON}
+        vehicles={vehicles}
+        routeDetails={routeDetails}
+      />
     </main>
   );
 }
