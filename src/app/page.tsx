@@ -159,60 +159,23 @@ const Map = dynamic(() => import("../components/Map"), {
 });
 
 export default function Home() {
-  const [routeIds, setRouteIds] = useState([
-    "10001",
-    "10002",
-    "10003",
-    "10004",
-    "10005",
-    "10006",
-    "10007",
-    "10009",
-    "10010",
-    "10011",
-    "10012",
-    "10014",
-    "10017",
-    "10020",
-    "10021",
-    "10921",
-    "10023",
-    "10024",
-    "10029",
-    "20030",
-    "20031",
-    "20033",
-    "20034",
-    "20035",
-    "20036",
-    "20038",
-    "30039",
-    "30041",
-    "30042",
-    "30043",
-    "30943",
-    "30044",
-    "20045",
-    "20046",
-    "30048",
-    "10073",
-    "20079",
-    "10090",
-    "10092",
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [routeIds, setRouteIds] = useState<string[]>([]);
   const [vehicles, setVehicles] = useState<RouteVehicle[]>([]);
   const [routesGeoJSON, setRoutesGeoJSON] = useState<any[]>([]);
   const [routeDetails, setRouteDetails] = useState<RouteDetails[]>([]);
 
-  const fetchVehicles = () => {
-    fetch(
-      `https://bustracker.pvta.com/InfoPoint/rest/Vehicles/GetAllVehiclesForRoutes?routeIDs=${routeIds.join(
+  const fetchVehicles = (ids: string[]) => {
+    return fetch(
+      `https://bustracker.pvta.com/InfoPoint/rest/Vehicles/GetAllVehiclesForRoutes?routeIDs=${ids.join(
         ","
       )}`
     )
       .then((res) => res.json())
       .then((res) => {
-        setVehicles(res);
+        if (res || res !== null) {
+          setVehicles(res);
+        }
       });
   };
 
@@ -221,8 +184,10 @@ export default function Home() {
       `https://bustracker.pvta.com/InfoPoint/rest/RouteDetails/GetAllRouteDetails`
     )
       .then((res) => res.json())
-      .then((res) => {
+      .then((res: RouteDetails[]) => {
         setRouteDetails(res);
+        console.log(res.map((r) => r.RouteId.toString()));
+        setRouteIds(res.map((r) => r.RouteId.toString()));
       });
   };
 
@@ -248,17 +213,20 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const intervalId = setInterval(fetchVehicles, 5000);
+    const intervalId = setInterval(fetchVehicles, 5000, routeIds);
 
     return () => {
       clearInterval(intervalId);
     };
+  }, [routeIds]);
+
+  useEffect(() => {
+    fetchAllRouteDetails();
   }, []);
 
   useEffect(() => {
-    fetchVehicles();
-    fetchAllRouteDetails();
-  }, []);
+    fetchVehicles(routeIds).then(() => setLoading(false));
+  }, [routeIds]);
 
   useEffect(() => {
     fetchKML();
@@ -270,7 +238,7 @@ export default function Home() {
         <div className="flex flex-col items-center justify-center w-full h-full justify-self-center">
           <span className="px-4 py-3 bg-gray-800 bg-opacity-75 rounded-md">
             <span className="text-xl font-bold text-white">
-              Only showing active routes
+              {loading ? "Initializing..." : "Only showing active routes"}
             </span>
           </span>
         </div>
@@ -279,7 +247,7 @@ export default function Home() {
         <div className="flex flex-col w-full h-full space-y-1">
           <span className="px-4 py-3 bg-gray-800 bg-opacity-75 rounded-md">
             <span className="text-xl font-bold text-white">
-              {vehicles.length} vehicles
+              {vehicles?.length} vehicles
             </span>
           </span>
           <span className="flex flex-col px-4 py-3 bg-gray-800 bg-opacity-75 rounded-md">
