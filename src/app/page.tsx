@@ -262,6 +262,15 @@ export default function Home() {
               })}
             </span>
           </span>
+          <span className="flex flex-col px-4 py-3 bg-gray-800 bg-opacity-75 rounded-md">
+            <a
+              href="https://github.com/jackmerrill/pvta-realtime-map"
+              target="_blank"
+              className="text-xl font-bold text-white"
+            >
+              View on GitHub
+            </a>
+          </span>
         </div>
       </div>
 
